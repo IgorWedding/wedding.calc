@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  pair
+  contractor
+  developer
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(pair)
+  city         String?
+  premiumPlan  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  contractorProfile Contractor?
+  requests          Request[]  @relation("ClientRequests")
+  estimates         Estimate[]
+}
+
+model Contractor {
+  id        String   @id @default(cuid())
+  userId    String?  @unique
+  user      User?    @relation(fields: [userId], references: [id])
+  name      String
+  type      String
+  city      String
+  price     Int
+  rating    Float    @default(4.5)
+  travel    Boolean  @default(false)
+  radius    Int      @default(0)
+  tags      String[] @default([])
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  requests Request[]
+}
+
+model Request {
+  id           String   @id @default(cuid())
+  contractorId String
+  contractor   Contractor @relation(fields: [contractorId], references: [id])
+  clientId     String?
+  client       User?    @relation("ClientRequests", fields: [clientId], references: [id])
+  clientName   String
+  contact      String
+  date         String?
+  note         String?
+  status       String   @default("new")
+  createdAt    DateTime @default(now())
+}
+
+model Estimate {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  city      String
+  date      String?
+  guests    Int
+  budget    Int
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+model Article {
+  id        String   @id @default(cuid())
+  title     String
+  summary   String
+  label     String   @default("База знаний")
+  body      String
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
